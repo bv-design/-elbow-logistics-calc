@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Калькулятор загрузки отводов</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0e11;--surface:#13151a;--surface2:#1a1d24;--surface3:#21252f;
+  --border:#252830;--border2:#2e3240;
+  --amber:#e8a020;--amber2:#f5b840;--amber-dim:#c07010;
+  --green:#3ecf8e;--red:#ef5454;--blue:#5b9cf6;--purple:#a78bfa;
+  --text:#e4e6ec;--text2:#9199ad;--text3:#565d72;
+  --font:'Rajdhani',sans-serif;--mono:'JetBrains Mono',monospace
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;min-height:100vh}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--surface)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.app{max-width:1400px;margin:0 auto;padding:16px}
+.header{display:flex;align-items:center;gap:16px;padding:16px 20px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:16px;flex-wrap:wrap}
+.header-icon{width:40px;height:40px;background:linear-gradient(135deg,var(--amber),var(--amber-dim));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.header h1{font-size:20px;font-weight:700;color:var(--amber);letter-spacing:1px}
+.header p{color:var(--text2);font-size:12px;margin-top:2px}
+.header-badges{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+.badge{padding:3px 10px;border-radius:4px;font-size:10px;font-weight:600;letter-spacing:.5px}
+.badge-amber{background:#e8a02020;border:1px solid #e8a02040;color:var(--amber)}
+.badge-green{background:#3ecf8e20;border:1px solid #3ecf8e40;color:var(--green)}
+.badge-blue{background:#5b9cf620;border:1px solid #5b9cf640;color:var(--blue)}
+.badge-red{background:#ef545420;border:1px solid #ef454440;color:var(--red)}
+.badge-purple{background:#a78bfa20;border:1px solid #a78bfa40;color:var(--purple)}
+.layout{display:grid;grid-template-columns:420px 1fr;gap:14px}
+@media(max-width:960px){.layout{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:14px}
+.card-hdr{color:var(--amber);font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.card-hdr::after{content:'';flex:1;height:1px;background:var(--border)}
+.vtabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.vtab{padding:8px 12px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;background:var(--surface2);color:var(--text2);font-family:var(--font);font-size:12px;font-weight:600;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:2px}
+.vtab:hover{border-color:var(--amber-dim);color:var(--text)}
+.vtab.active{background:linear-gradient(135deg,#e8a02020,#e8a02008);border-color:var(--amber);color:var(--amber)}
+.vtab-icon{font-size:16px}
+.vtab-warn{font-size:8px;color:var(--red)}
+.vinfo{background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:10px 12px;margin-bottom:12px;display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.vi-item{text-align:center}
+.vi-val{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--text)}
+.vi-lbl{color:var(--text3);font-size:9px;margin-top:1px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px}
+.field label{color:var(--text2);font-size:10px;font-weight:600;letter-spacing:.5px;display:block;margin-bottom:3px}
+select,input[type=number],input[type=text]{background:var(--surface2);border:1px solid var(--border2);color:var(--text);padding:6px 9px;border-radius:5px;font-family:var(--font);font-size:13px;width:100%;outline:none;transition:border-color .15s}
+select:focus,input:focus{border-color:var(--amber)}
+select option{background:var(--surface2)}
+.elbow-prev{background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:10px;margin-bottom:8px;display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start}
+.elbow-specs{font-size:11px;width:100%}
+.spec-row{display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid var(--border)}
+.spec-row:last-child{border:none}
+.spec-lbl{color:var(--text3)}
+.spec-val{color:var(--text);font-family:var(--mono)}
+.spec-warn{color:var(--red)}
+.spec-mat{color:var(--blue)}
+.items-table{width:100%;border-collapse:collapse;font-size:12px}
+.items-table th{color:var(--text3);font-size:10px;font-weight:600;letter-spacing:.5px;text-align:left;padding:5px 7px;border-bottom:1px solid var(--border2);white-space:nowrap}
+.items-table td{padding:4px 7px;border-bottom:1px solid var(--border);vertical-align:middle}
+.items-table tr:hover td{background:var(--surface2)}
+.btn{padding:8px 18px;border-radius:5px;border:none;cursor:pointer;font-family:var(--font);font-size:13px;font-weight:700;letter-spacing:.5px;transition:all .15s}
+.btn-amber{background:var(--amber);color:#000}.btn-amber:hover{background:var(--amber2)}
+.btn-blue{background:#2563eb22;color:var(--blue);border:1px solid #3b82f640}.btn-blue:hover{background:#2563eb44}
+.btn-ghost{background:var(--surface2);color:var(--text2);border:1px solid var(--border2)}.btn-ghost:hover{border-color:var(--amber-dim);color:var(--text)}
+.btn-red{background:transparent;color:var(--red);border:1px solid #ef454440;padding:4px 9px;font-size:11px}.btn-red:hover{background:#ef454420}
+.btn-sm{padding:5px 12px;font-size:11px}
+.btn-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.results-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:14px}
+.rstat{background:var(--surface2);border:1px solid var(--border2);border-radius:7px;padding:12px}
+.rstat-val{font-size:22px;font-weight:700;color:var(--amber);font-family:var(--mono)}
+.rstat-lbl{color:var(--text3);font-size:10px;margin-top:2px}
+.transport-card{background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:14px;margin-bottom:12px}
+.transport-card.oversized{border-color:#a78bfa60;background:#a78bfa08}
+.tc-hdr{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.tc-num{background:var(--amber);color:#000;width:24px;height:24px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0}
+.tc-title{font-weight:700;font-size:14px}
+.tc-badges{margin-left:auto;display:flex;gap:5px;flex-wrap:wrap}
+.pkg-box{background:var(--surface3);border-left:3px solid var(--amber);padding:8px 10px;border-radius:0 5px 5px 0;font-size:11px;color:var(--text2);margin-bottom:8px}
+.pkg-box strong{color:var(--amber);display:block;margin-bottom:2px;font-size:10px;letter-spacing:.5px}
+.alert{padding:8px 12px;border-radius:6px;font-size:12px;margin-bottom:8px}
+.alert-warn{background:#e8a02015;border:1px solid #e8a02040;color:var(--amber)}
+.alert-err{background:#ef545415;border:1px solid #ef454440;color:var(--red)}
+.alert-info{background:#5b9cf615;border:1px solid #5b9cf640;color:var(--blue)}
+.alert-over{background:#a78bfa15;border:1px solid #a78bfa40;color:var(--purple)}
+.empty{text-align:center;padding:40px 20px;color:var(--text3)}
+.empty-icon{font-size:48px;margin-bottom:12px;opacity:.3}
+.divider{height:1px;background:var(--border);margin:12px 0}
+.oversized-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;background:#a78bfa20;border:1px solid #a78bfa50;border-radius:4px;color:var(--purple);font-size:10px;font-weight:700}
+.mode-tabs{display:flex;gap:6px;margin-bottom:12px}
+.mode-tab{flex:1;padding:7px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;background:var(--surface2);color:var(--text2);font-family:var(--font);font-size:12px;font-weight:600;text-align:center;transition:all .15s}
+.mode-tab.active{border-color:var(--blue);color:var(--blue);background:#5b9cf610}
+.manual-note{background:var(--surface3);border:1px dashed var(--border2);border-radius:6px;padding:10px;margin-bottom:8px;font-size:11px;color:var(--text3)}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState, useMemo} = React;
+
+// ═══════════════════════════════════════════════════════════════
+// БАЗА ДАННЫХ ОТВОДОВ
+// ГОСТ 17375-2001 (1D), ГОСТ 30753-2001 (1.5D),
+// ТУ 1468-003-18947170, EN 10253-1/2/4, ASME B16.9
+// F = строительный размер (от оси до торца), мм
+// R = радиус гиба по нейт. оси (мм)
+// mat = марка стали / материал
+// ═══════════════════════════════════════════════════════════════
+const ELBOWS_DB = [
+  // ── DN25 ──
+  {dn:25,  od:32,   wt:3.0,  angle:90,  r:'1D',   R:32,    F:51,   weight:0.14,  gost:'ГОСТ 17375', mat:'Ст20',          note:''},
+  {dn:25,  od:32,   wt:3.0,  angle:45,  r:'1D',   R:32,    F:30,   weight:0.08,  gost:'ГОСТ 17375', mat:'Ст20',          note:''},
+  // ── DN32 ──
+  {dn:32,  od:38,   wt:3.0,  angle:90,  r:'1D',   R:38,    F:57,   weight:0.20,  gost:'ГОСТ 17375', mat:'Ст20',          note:''},
+  {dn:32,  od:38,   wt:3.0,  angle:45,  r:'1D',   R:38,    F:34,   weight:0.12,  gost:'ГОСТ 17375', mat:'Ст20',          note:''},
+  // ── DN40 ──
+  {dn:40,  od:45,   wt:3.0,  angle:90,  r:'1D',   R:45,    F:64,   weight:0.28,  gost:'ГОСТ 17375', mat:'Ст20',          note:''},
+  {dn:40,  od:45,   wt:3.0,  angle:45,  r:'1D',   R:45,    F:39,   weight:0.17,  gost:'ГОСТ 17375', mat:'Ст20',          note:''},
+  // ── DN50 ──
+  {dn:50,  od:57,   wt:3.5,  angle:90,  r:'1D',   R:57,    F:76,   weight:0.50,  gost:'ГОСТ 17375', mat:'Ст20',          note:''},
+  {dn:50,  od:57,   wt:3.5,  angle:45,  r:'1D',   R:57,    F:46,   weight:0.30,  gost:'ГОСТ 17375', mat:'Ст20',          note:''},
+  {dn:50,  od:57,   wt:3.5,  angle:180, r:'1D',   R:57,    F:152,  weight:0.90,  gost:'ГОСТ 17375', mat:'Ст20',          note:'Возврат'},
+  {dn:50,  od:57,   wt:3.5,  angle:90,  r:'1.5D', R:86,    F:114,  weight:0.65,  gost:'ГОСТ 30753', mat:'Ст20',          note:''},
+  // ── DN65 ──
+  {dn:65,  od:76,   wt:4.0,  angle:90,  r:'1D',   R:76,    F:95,   weight:0.93,  gost:'ГОСТ 17375', mat:'Ст20',          note:''},
+  {dn:65,  od:76,   wt:4.0,  angle:45,  r:'1D',   R:76,    F:58,   weight:0.56,  gost:'ГОСТ 17375', mat:'Ст20',          note:''},
+  {dn:65,  od:76,   wt:4.0,  angle:90,  r:'1.5D', R:114,   F:143,  weight:1.10,  gost:'ГОСТ 30753', mat:'Ст20',          note:''},
+  // ── DN80 ──
+  {dn:80,  od:89,   wt:4.0,  angle:90,  r:'1D',   R:89,    F:108,  weight:1.30,  gost:'ГОСТ 17375', mat:'Ст20',          note:''},
+  {dn:80,  od:89,   wt:4.0,  angle:45,  r:'1D',   R:89,    F:66,   weight:0.80,  gost:'ГОСТ 17375', mat:'Ст20',          note:''},
+  {dn:80,  od:89,   wt:4.0,  angle:180, r:'1D',   R:89,    F:216,  weight:2.30,  gost:'ГОСТ 17375', mat:'Ст20',          note:'Возврат'},
+  {dn:80,  od:89,   wt:4.0,  angle:90,  r:'1.5D', R:134,   F:162,  weight:1.60,  gost:'ГОСТ 30753', mat:'Ст20',          note:''},
+  // ── DN100 ──
+  {dn:100, od:108,  wt:4.5,  angle:90,  r:'1D',   R:108,   F:133,  weight:2.20,  gost:'ГОСТ 17375', mat:'Ст20',          note:''},
+  {dn:100, od:108,  wt:4.5,  angle:45,  r:'1D',   R:108,   F:81,   weight:1.30,  gost:'ГОСТ 17375', mat:'Ст20',          note:''},
+  {dn:100, od:108,  wt:4.5,  angle:180, r:'1D',   R:108,   F:266,  weight:4.00,  gost:'ГОСТ 17375', mat:'Ст20',          note:'Возврат'},
+  {dn:100, od:108,  wt:4.5,  angle:90,  r:'1.5D', R:162,   F:200,  weight:2.80,  gost:'ГОСТ 30753', mat:'Ст20',          note:''},
+  {dn:100, od:108,  wt:4.5,  angle:45,  r:'1.5D', R:162,   F:122,  weight:1.70,  gost:'ГОСТ 30753', mat:'Ст20',          note:''},
+  // ── DN125 ──
+  {dn:125, od:133,  wt:5.0,  angle:90,  r:'1D',   R:133,   F:159,  weight:3.80,  gost:'ГОСТ 17375', mat:'Ст20',          note:''},
+  {dn:125, od:133,  wt:5.0,  angle:45,  r:'1D',   R:133,   F:97,   weight:2.30,  gost:'ГОСТ 17375', mat:'Ст20',          note:''},
+  {dn:125, od:133,  wt:5.0,  angle:90,  r:'1.5D', R:200,   F:238,  weight:4.80,  gost:'ГОСТ 30753', mat:'Ст20',          note:''},
+  // ── DN150 ──
+  {dn:150, od:159,  wt:5.0,  angle:90,  r:'1D',   R:159,   F:190,  weight:5.80,  gost:'ГОСТ 17375', mat:'Ст20',          note:''},
+  {dn:150, od:159,  wt:5.0,  angle:45,  r:'1D',   R:159,   F:116,  weight:3.50,  gost:'ГОСТ 17375', mat:'Ст20',          note:''},
+  {dn:150, od:159,  wt:5.0,  angle:180, r:'1D',   R:159,   F:380,  weight:10.50, gost:'ГОСТ 17375', mat:'Ст20',          note:'Возврат'},
+  {dn:150, od:159,  wt:5.0,  angle:90,  r:'1.5D', R:239,   F:285,  weight:7.40,  gost:'ГОСТ 30753', mat:'Ст20',          note:''},
+  {dn:150, od:159,  wt:5.0,  angle:45,  r:'1.5D', R:239,   F:174,  weight:4.44,  gost:'ГОСТ 30753', mat:'Ст20',          note:''},
+  // ── DN200 ──
+  {dn:200, od:219,  wt:6.0,  angle:90,  r:'1D',   R:219,   F:267,  weight:13.00, gost:'ГОСТ 17375', mat:'Ст20',          note:''},
+  {dn:200, od:219,  wt:6.0,  angle:45,  r:'1D',   R:219,   F:163,  weight:7.80,  gost:'ГОСТ 17375', mat:'Ст20',          note:''},
+  {dn:200, od:219,  wt:6.0,  angle:180, r:'1D',   R:219,   F:534,  weight:23.50, gost:'ГОСТ 17375', mat:'Ст20',          note:'Возврат'},
+  {dn:200, od:219,  wt:6.0,  angle:90,  r:'1.5D', R:329,   F:400,  weight:16.50, gost:'ГОСТ 30753', mat:'Ст20',          note:''},
+  {dn:200, od:219,  wt:6.0,  angle:45,  r:'1.5D', R:329,   F:244,  weight:9.90,  gost:'ГОСТ 30753', mat:'Ст20',          note:''},
+  // ── DN250 ──
+  {dn:250, od:273,  wt:7.0,  angle:90,  r:'1D',   R:273,   F:325,  weight:24.50, gost:'ГОСТ 17375', mat:'Ст20',          note:''},
+  {dn:250, od:273,  wt:7.0,  angle:45,  r:'1D',   R:273,   F:198,  weight:14.70, gost:'ГОСТ 17375', mat:'Ст20',          note:''},
+  {dn:250, od:273,  wt:7.0,  angle:90,  r:'1.5D', R:410,   F:488,  weight:31.00, gost:'ГОСТ 30753', mat:'Ст20',          note:''},
+  {dn:250, od:273,  wt:7.0,  angle:45,  r:'1.5D', R:410,   F:298,  weight:18.60, gost:'ГОСТ 30753', mat:'Ст20',          note:''},
+  // ── DN300 ──
+  {dn:300, od:325,  wt:8.0,  angle:90,  r:'1D',   R:325,   F:381,  weight:42.00, gost:'ГОСТ 17375', mat:'Ст20',          note:''},
+  {dn:300, od:325,  wt:8.0,  angle:45,  r:'1D',   R:325,   F:233,  weight:25.20, gost:'ГОСТ 17375', mat:'Ст20',          note:''},
+  {dn:300, od:325,  wt:8.0,  angle:90,  r:'1.5D', R:488,   F:571,  weight:53.00, gost:'ГОСТ 30753', mat:'Ст20',          note:''},
+  {dn:300, od:325,  wt:8.0,  angle:45,  r:'1.5D', R:488,   F:348,  weight:31.80, gost:'ГОСТ 30753', mat:'Ст20',          note:''},
+  // ── DN350 ──
+  {dn:350, od:377,  wt:9.0,  angle:90,  r:'1D',   R:377,   F:432,  weight:63.00, gost:'ГОСТ 17375', mat:'Ст20',          note:''},
+  {dn:350, od:377,  wt:9.0,  angle:45,  r:'1D',   R:377,   F:264,  weight:37.80, gost:'ГОСТ 17375', mat:'Ст20',          note:''},
+  {dn:350, od:377,  wt:9.0,  angle:90,  r:'1.5D', R:565,   F:648,  weight:80.00, gost:'EN 10253-2',  mat:'P235GH',       note:''},
+  {dn:350, od:377,  wt:9.0,  angle:45,  r:'1.5D', R:565,   F:396,  weight:48.00, gost:'EN 10253-2',  mat:'P235GH',       note:''},
+  // ── DN400 ──
+  {dn:400, od:426,  wt:10.0, angle:90,  r:'1D',   R:426,   F:500,  weight:98.00, gost:'ТУ 1468',    mat:'Ст20',          note:''},
+  {dn:400, od:426,  wt:10.0, angle:45,  r:'1D',   R:426,   F:305,  weight:58.80, gost:'ТУ 1468',    mat:'Ст20',          note:''},
+  {dn:400, od:426,  wt:10.0, angle:90,  r:'1.5D', R:639,   F:750,  weight:124.0, gost:'EN 10253-2',  mat:'P235GH',       note:''},
+  {dn:400, od:426,  wt:10.0, angle:45,  r:'1.5D', R:639,   F:458,  weight:74.4,  gost:'EN 10253-2',  mat:'P235GH',       note:''},
+  // ── DN500 ──
+  {dn:500, od:530,  wt:10.0, angle:90,  r:'1D',   R:530,   F:620,  weight:155.0, gost:'ТУ 1468',    mat:'Ст20',          note:'КГО'},
+  {dn:500, od:530,  wt:10.0, angle:45,  r:'1D',   R:530,   F:378,  weight:93.0,  gost:'ТУ 1468',    mat:'Ст20',          note:'КГО'},
+  {dn:500, od:530,  wt:10.0, angle:90,  r:'1.5D', R:795,   F:930,  weight:195.0, gost:'EN 10253-2',  mat:'P235GH',       note:'КГО'},
+  {dn:500, od:530,  wt:10.0, angle:45,  r:'1.5D', R:795,   F:568,  weight:117.0, gost:'EN 10253-2',  mat:'P235GH',       note:'КГО'},
+  // ── DN600 ──
+  {dn:600, od:630,  wt:12.0, angle:90,  r:'1D',   R:630,   F:750,  weight:265.0, gost:'ТУ 1468',    mat:'Ст20',          note:'КГО'},
+  {dn:600, od:630,  wt:12.0, angle:45,  r:'1D',   R:630,   F:458,  weight:159.0, gost:'ТУ 1468',    mat:'Ст20',          note:'КГО'},
+  {dn:600, od:630,  wt:12.0, angle:90,  r:'1.5D', R:945,   F:1125, weight:335.0, gost:'EN 10253-2',  mat:'P235GH',       note:'КГО'},
+  {dn:600, od:630,  wt:12.0, angle:45,  r:'1.5D', R:945,   F:687,  weight:201.0, gost:'EN 10253-2',  mat:'P235GH',       note:'КГО'},
+  // ── DN700 ──
+  {dn:700, od:720,  wt:12.0, angle:90,  r:'1D',   R:720,   F:860,  weight:390.0, gost:'ТУ',         mat:'Ст20',          note:'Негабарит'},
+  {dn:700, od:720,  wt:12.0, angle:45,  r:'1D',   R:720,   F:525,  weight:234.0, gost:'ТУ',         mat:'Ст20',          note:'Негабарит'},
+  {dn:700, od:720,  wt:12.0, angle:90,  r:'1.5D', R:1080,  F:1290, weight:490.0, gost:'EN 10253-2',  mat:'P235GH',       note:'Негабарит'},
+  {dn:700, od:720,  wt:12.0, angle:45,  r:'1.5D', R:1080,  F:787,  weight:294.0, gost:'EN 10253-2',  mat:'P235GH',       note:'Негабарит'},
+  // ── DN800 ──
+  {dn:800, od:820,  wt:12.0, angle:90,  r:'1D',   R:820,   F:980,  weight:578.0, gost:'ТУ',         mat:'Ст20',          note:'Негабарит'},
+  {dn:800, od:820,  wt:12.0, angle:45,  r:'1D',   R:820,   F:598,  weight:347.0, gost:'ТУ',         mat:'Ст20',          note:'Негабарит'},
+  {dn:800, od:820,  wt:12.0, angle:90,  r:'1.5D', R:1230,  F:1470, weight:726.0, gost:'EN 10253-2',  mat:'P235GH',       note:'Негабарит'},
+  {dn:800, od:820,  wt:12.0, angle:45,  r:'1.5D', R:1230,  F:898,  weight:436.0, gost:'EN 10253-2',  mat:'P235GH',       note:'Негабарит'},
+  // ── DN900 ──
+  {dn:900, od:914,  wt:12.5, angle:90,  r:'1D',   R:914,   F:1090, weight:795.0, gost:'ТУ',         mat:'Ст20',          note:'Негабарит'},
+  {dn:900, od:914,  wt:12.5, angle:45,  r:'1D',   R:914,   F:666,  weight:477.0, gost:'ТУ',         mat:'Ст20',          note:'Негабарит'},
+  {dn:900, od:914,  wt:12.5, angle:90,  r:'1.5D', R:1371,  F:1635, weight:1000,  gost:'EN 10253-2',  mat:'P235GH',       note:'Негабарит'},
+  // ── DN1000 ──
+  {dn:1000,od:1020, wt:14.0, angle:90,  r:'1D',   R:1020,  F:1220, weight:1050,  gost:'ТУ',         mat:'Ст20',          note:'Негабарит'},
+  {dn:1000,od:1020, wt:14.0, angle:45,  r:'1D',   R:1020,  F:745,  weight:630.0, gost:'ТУ',         mat:'Ст20',          note:'Негабарит'},
+  {dn:1000,od:1020, wt:14.0, angle:90,  r:'1.5D', R:1530,  F:1830, weight:1320,  gost:'EN 10253-2',  mat:'P235GH',       note:'Негабарит'},
+  {dn:1000,od:1020, wt:14.0, angle:45,  r:'1.5D', R:1530,  F:1118, weight:792.0, gost:'EN 10253-2',  mat:'P235GH',       note:'Негабарит'},
+
+  // ══════════════════════════════════════════════════════════════
+  // КРУПНЫЕ ОТВОДЫ EN 10253 — нестандартные OD (дюймовый ряд)
+  // ══════════════════════════════════════════════════════════════
+
+  // ── Ø1067 (DN1050, 42") ──
+  {dn:1050,od:1067, wt:14.0, angle:90,  r:'1.5D', R:1600,  F:1910, weight:1520,  gost:'EN 10253-2',  mat:'P235GH',       note:'Негабарит'},
+  {dn:1050,od:1067, wt:14.0, angle:45,  r:'1.5D', R:1600,  F:1165, weight:912.0, gost:'EN 10253-2',  mat:'P235GH',       note:'Негабарит'},
+  {dn:1050,od:1067, wt:14.0, angle:22.5,r:'1.5D', R:1600,  F:613,  weight:492.0, gost:'EN 10253-2',  mat:'P235GH',       note:'Негабарит'},
+
+  // ── Ø1168 (DN1150, 46") ──
+  {dn:1150,od:1168, wt:14.0, angle:90,  r:'1.5D', R:1752,  F:2090, weight:1830,  gost:'EN 10253-2',  mat:'P235GH',       note:'Негабарит'},
+  {dn:1150,od:1168, wt:14.0, angle:45,  r:'1.5D', R:1752,  F:1276, weight:1098,  gost:'EN 10253-2',  mat:'P235GH',       note:'Негабарит'},
+
+  // ── Ø1219×14,2 (DN1200, 48") — EN 10253-4, X2CrNi 19-11 ──
+  {dn:1200,od:1219, wt:14.2, angle:22.5,r:'1.5D', R:1829,  F:700,  weight:640.0, gost:'EN 10253-4',  mat:'X2CrNi 19-11', note:'Нержавейка'},
+  {dn:1200,od:1219, wt:14.2, angle:23.7,r:'1.5D', R:1829,  F:736,  weight:673.0, gost:'EN 10253-4',  mat:'X2CrNi 19-11', note:'Нержавейка'},
+  {dn:1200,od:1219, wt:14.2, angle:30,  r:'1.5D', R:1829,  F:944,  weight:858.0, gost:'EN 10253-4',  mat:'X2CrNi 19-11', note:'Нержавейка'},
+  {dn:1200,od:1219, wt:14.2, angle:45,  r:'1.5D', R:1829,  F:1295, weight:1280,  gost:'EN 10253-4',  mat:'X2CrNi 19-11', note:'Нержавейка'},
+  {dn:1200,od:1219, wt:14.2, angle:60,  r:'1.5D', R:1829,  F:1585, weight:1660,  gost:'EN 10253-4',  mat:'X2CrNi 19-11', note:'Нержавейка'},
+  {dn:1200,od:1219, wt:14.2, angle:90,  r:'1.5D', R:1829,  F:2048, weight:2200,  gost:'EN 10253-4',  mat:'X2CrNi 19-11', note:'Нержавейка'},
+  // Ø1219 — EN 10253-2, P235GH
+  {dn:1200,od:1219, wt:14.2, angle:22.5,r:'1.5D', R:1829,  F:700,  weight:600.0, gost:'EN 10253-2',  mat:'P235GH',       note:'Негабарит'},
+  {dn:1200,od:1219, wt:14.2, angle:45,  r:'1.5D', R:1829,  F:1295, weight:1200,  gost:'EN 10253-2',  mat:'P235GH',       note:'Негабарит'},
+  {dn:1200,od:1219, wt:14.2, angle:60,  r:'1.5D', R:1829,  F:1585, weight:1556,  gost:'EN 10253-2',  mat:'P235GH',       note:'Негабарит'},
+  {dn:1200,od:1219, wt:14.2, angle:90,  r:'1.5D', R:1829,  F:2048, weight:2060,  gost:'EN 10253-2',  mat:'P235GH',       note:'Негабарит'},
+
+  // ── Ø1321×20 (DN1300, 52") — EN 10253-2, P235GH ──
+  {dn:1300,od:1321, wt:20.0, angle:22.5,r:'1.5D', R:1982,  F:759,  weight:972.0, gost:'EN 10253-2',  mat:'P235GH',       note:'Негабарит'},
+  {dn:1300,od:1321, wt:20.0, angle:30,  r:'1.5D', R:1982,  F:1024, weight:1310,  gost:'EN 10253-2',  mat:'P235GH',       note:'Негабарит'},
+  {dn:1300,od:1321, wt:20.0, angle:45,  r:'1.5D', R:1982,  F:1403, weight:2050,  gost:'EN 10253-2',  mat:'P235GH',       note:'Негабарит'},
+  {dn:1300,od:1321, wt:20.0, angle:60,  r:'1.5D', R:1982,  F:1718, weight:2640,  gost:'EN 10253-2',  mat:'P235GH',       note:'Негабарит'},
+  {dn:1300,od:1321, wt:20.0, angle:90,  r:'1.5D', R:1982,  F:2220, weight:3410,  gost:'EN 10253-2',  mat:'P235GH',       note:'Негабарит'},
+
+  // ── Ø1422 (DN1400, 56") ──
+  {dn:1400,od:1422, wt:16.0, angle:45,  r:'1.5D', R:2133,  F:1510, weight:2352,  gost:'EN 10253-2',  mat:'P235GH',       note:'Негабарит'},
+  {dn:1400,od:1422, wt:16.0, angle:90,  r:'1.5D', R:2133,  F:2390, weight:3920,  gost:'EN 10253-2',  mat:'P235GH',       note:'Негабарит'},
+
+  // ── Ø1524 (DN1500, 60") ──
+  {dn:1500,od:1524, wt:16.0, angle:45,  r:'1.5D', R:2286,  F:1619, weight:2890,  gost:'EN 10253-2',  mat:'P235GH',       note:'Негабарит'},
+  {dn:1500,od:1524, wt:16.0, angle:90,  r:'1.5D', R:2286,  F:2560, weight:4820,  gost:'EN 10253-2',  mat:'P235GH',       note:'Негабарит'},
+
+  // ── Ø1626 (DN1600, 64") ──
+  {dn:1600,od:1626, wt:18.0, angle:45,  r:'1.5D', R:2438,  F:1727, weight:3820,  gost:'EN 10253-2',  mat:'P235GH',       note:'Негабарит'},
+  {dn:1600,od:1626, wt:18.0, angle:90,  r:'1.5D', R:2438,  F:2733, weight:6380,  gost:'EN 10253-2',  mat:'P235GH',       note:'Негабарит'},
+];
+
+const DNS = [...new Set(ELBOWS_DB.map(e=>e.dn))].sort((a,b)=>a-b);
+const ALL_GOSTS = [...new Set(ELBOWS_DB.map(e=>e.gost))].sort();
+
+// ═══════════════════════════════════════════════════
+// ТРАНСПОРТ
+// ═══════════════════════════════════════════════════
+const VEHICLES = {
+  truck:   {name:'Фура',          icon:'🚛', L:13600, W:2440, H:2580, maxW:22000, type:'std'},
+  wagon:   {name:'Полувагон',     icon:'🚃', L:12680, W:2830, H:2170, maxW:63000, type:'std'},
+  c20:     {name:'Конт. 20фт',    icon:'📦', L:5867,  W:2352, H:2393, maxW:21700, type:'std'},
+  c40:     {name:'Конт. 40фт',    icon:'📦', L:12032, W:2350, H:2390, maxW:26680, type:'std'},
+  low_bed: {name:'Тял (низкорамн)',icon:'🚚', L:16000, W:3000, H:1400, maxW:50000, type:'oversized', note:'Возможна ширина до 5 м (доп. разрешение)'},
+  special: {name:'Спецтранспорт', icon:'🏗️', L:20000, W:4500, H:4500, maxW:100000,type:'oversized', note:'Негабарит — индивидуальный проект'},
+};
+
+// ═══════════════════════════════════════════════════
+// УПАКОВКА
+// ═══════════════════════════════════════════════════
+const PACKAGING = {
+  small:     {label:'Деревянные ящики / паллеты',     gap:50,  stackable:true,  desc:'DN 25–100: укладка в ящики 1–4 ряда, стяжка лентой. Масса паллеты до 1 т.'},
+  medium:    {label:'Деревянные поддоны + стяжки',    gap:80,  stackable:true,  desc:'DN 100–300: укладка на поддоны в 2 ряда, деревянные прокладки 40 мм, металлические стяжки.'},
+  large:     {label:'Деревянные клинья + цепи',       gap:120, stackable:false, desc:'DN 300–600: поштучная укладка на брусья-подкладки, фиксация цепями / стяжными ремнями.'},
+  oversized: {label:'Индивидуальный проект крепления',gap:200, stackable:false, desc:'DN >600: спец. проект крепления, согласование маршрута, ГИБДД-сопровождение.'},
+};
+function getPkg(dn) {
+  if (dn<=100) return PACKAGING.small;
+  if (dn<=300) return PACKAGING.medium;
+  if (dn<=600) return PACKAGING.large;
+  return PACKAGING.oversized;
+}
+
+// ═══════════════════════════════════════════════════
+// РАСЧЁТ ЗАГРУЗКИ
+// ═══════════════════════════════════════════════════
+function calcLoad(items, vKey) {
+  const v = VEHICLES[vKey];
+  let totalWeight = 0;
+  const processed = items.map(it => {
+    const el = it.elbow;
+    const pkg = getPkg(el.dn);
+    const gap = pkg.gap;
+    let boxW, boxH, boxL;
+    if (el.angle===90) {
+      boxW = el.F + gap;
+      boxH = el.F + gap;
+      boxL = el.od + gap;
+    } else if (el.angle===180) {
+      boxW = el.F + gap;
+      boxH = el.od*2 + gap;
+      boxL = el.od + gap;
+    } else {
+      const rad = el.angle * Math.PI / 180;
+      const proj = Math.round(el.R * Math.sin(rad) + el.od/2);
+      boxW = proj + gap;
+      boxH = el.F + gap;
+      boxL = el.od + gap;
+    }
+    const wTotal = el.weight * it.qty;
+    totalWeight += wTotal;
+    const perRow   = Math.max(1, Math.floor(v.W / boxW));
+    const rows     = Math.max(1, Math.floor(v.H / boxH));
+    const perLayer = perRow * rows;
+    const stacks   = pkg.stackable ? Math.max(1, Math.floor(v.L / boxL)) : 1;
+    const maxPerVeh = perLayer * stacks;
+    const vehiclesNeeded = maxPerVeh>0 ? Math.ceil(it.qty/maxPerVeh) : Infinity;
+    const singleOverW = boxW > v.W;
+    const singleOverH = boxH > v.H;
+    const oversized = singleOverW || singleOverH;
+    return {...it, boxW, boxH, boxL, perLayer, stacks, maxPerVeh, vehiclesNeeded, wTotal, oversized, singleOverW, singleOverH, pkg};
+  });
+  let totalVehicles = 0;
+  processed.forEach(p=>{ if(isFinite(p.vehiclesNeeded)) totalVehicles += p.vehiclesNeeded; });
+  return {processed, totalWeight, totalVehicles, v};
+}
+
+// ═══════════════════════════════════════════════════
+// SVG ИКОНКА
+// ═══════════════════════════════════════════════════
+function ElbowSVG({angle, size=60, color='#e8a020'}) {
+  const thick = 5;
+  if (angle>=90) return (
+    <svg width={size} height={size} viewBox="0 0 60 60">
+      <path d="M10,30 Q30,30 30,10" fill="none" stroke={color} strokeWidth={thick} strokeLinecap="round"/>
+      <circle cx="10" cy="30" r="4" fill={color} opacity=".5"/>
+      <circle cx="30" cy="10" r="4" fill={color} opacity=".5"/>
+    </svg>
+  );
+  if (angle>=60) return (
+    <svg width={size} height={size} viewBox="0 0 60 60">
+      <path d="M10,38 Q24,24 38,10" fill="none" stroke={color} strokeWidth={thick} strokeLinecap="round"/>
+      <circle cx="10" cy="38" r="4" fill={color} opacity=".5"/>
+      <circle cx="38" cy="10" r="4" fill={color} opacity=".5"/>
+    </svg>
+  );
+  if (angle>=40) return (
+    <svg width={size} height={size} viewBox="0 0 60 60">
+      <path d="M10,42 Q28,28 42,10" fill="none" stroke={color} strokeWidth={thick} strokeLinecap="round"/>
+      <circle cx="10" cy="42" r="4" fill={color} opacity=".5"/>
+      <circle cx="42" cy="10" r="4" fill={color} opacity=".5"/>
+    </svg>
+  );
+  return (
+    <svg width={size} height={size} viewBox="0 0 60 60">
+      <path d="M10,48 Q18,18 48,10" fill="none" stroke={color} strokeWidth={thick} strokeLinecap="round"/>
+      <circle cx="10" cy="48" r="4" fill={color} opacity=".5"/>
+      <circle cx="48" cy="10" r="4" fill={color} opacity=".5"/>
+    </svg>
+  );
+}
+
+// ═══════════════════════════════════════════════════
+// ГЛАВНЫЙ КОМПОНЕНТ
+// ═══════════════════════════════════════════════════
+function App() {
+  const [vKey, setVKey]       = useState('truck');
+  const [items, setItems]     = useState([]);
+  const [mode, setMode]       = useState('db'); // 'db' | 'manual'
+  const [showRef, setShowRef] = useState(false);
+  const [refFilter, setRefFilter] = useState('');
+
+  // Форма — из базы
+  const [form, setForm] = useState({dn:'100', r:'1.5D', angle:'90', qty:'10', name:'', gost:'', mat:''});
+
+  // Форма — ручной ввод
+  const [mf, setMf] = useState({name:'', od:'', wt:'', angle:'90', F:'', R:'', weight:'', qty:'1', gost:'EN 10253-2', mat:'P235GH', note:''});
+
+  // Выбранный из базы
+  const selectedElbow = useMemo(() => {
+    return ELBOWS_DB.find(e =>
+      e.dn===Number(form.dn) &&
+      e.r===form.r &&
+      e.angle===Number(form.angle) &&
+      (form.gost==='' || e.gost===form.gost) &&
+      (form.mat==='' || e.mat===form.mat)
+    );
+  }, [form]);
+
+  const availAngles = useMemo(()=>{
+    return [...new Set(ELBOWS_DB.filter(e=>e.dn===Number(form.dn)&&e.r===form.r&&(form.gost===''||e.gost===form.gost)).map(e=>e.angle))].sort((a,b)=>a-b);
+  },[form.dn,form.r,form.gost]);
+
+  const availRs = useMemo(()=>{
+    return [...new Set(ELBOWS_DB.filter(e=>e.dn===Number(form.dn)).map(e=>e.r))].sort();
+  },[form.dn]);
+
+  const availGosts = useMemo(()=>{
+    return [...new Set(ELBOWS_DB.filter(e=>e.dn===Number(form.dn)&&e.r===form.r).map(e=>e.gost))].sort();
+  },[form.dn,form.r]);
+
+  const availMats = useMemo(()=>{
+    return [...new Set(ELBOWS_DB.filter(e=>e.dn===Number(form.dn)&&e.r===form.r&&(form.gost===''||e.gost===form.gost)).map(e=>e.mat))].sort();
+  },[form.dn,form.r,form.gost]);
+
+  function addFromDb() {
+    if (!selectedElbow || Number(form.qty)<1) return;
+    const id = Date.now();
+    const label = form.name || `DN${selectedElbow.dn} Ø${selectedElbow.od}×${selectedElbow.wt} ${selectedElbow.angle}° ${selectedElbow.r} ${selectedElbow.mat}`;
+    setItems(prev=>[...prev,{id,elbow:selectedElbow,qty:Number(form.qty),name:label}]);
+    setForm(f=>({...f,qty:'10',name:''}));
+  }
+
+  function addManual() {
+    const el = {
+      dn: Math.round(Number(mf.od)),
+      od: Number(mf.od),
+      wt: Number(mf.wt),
+      angle: Number(mf.angle),
+      r: 'custom',
+      R: Number(mf.R)||Math.round(Number(mf.od)*1.5),
+      F: Number(mf.F),
+      weight: Number(mf.weight),
+      gost: mf.gost||'—',
+      mat: mf.mat||'—',
+      note: mf.note||'Ручной ввод',
+    };
+    if (!el.od||!el.F||!el.weight) return;
+    const id = Date.now();
+    const label = mf.name || `Ø${el.od}×${el.wt} ${el.angle}° ${el.mat}`;
+    setItems(prev=>[...prev,{id,elbow:el,qty:Number(mf.qty)||1,name:label}]);
+    setMf(f=>({...f,qty:'1',name:''}));
+  }
+
+  function removeItem(id){setItems(p=>p.filter(i=>i.id!==id));}
+
+  const result = useMemo(()=>items.length?calcLoad(items,vKey):null,[items,vKey]);
+  const hasOversized = result?.processed.some(p=>p.oversized);
+
+  const filteredDb = useMemo(()=>{
+    const f = refFilter.toLowerCase();
+    return ELBOWS_DB.filter(e=>
+      !f ||
+      String(e.dn).includes(f) ||
+      String(e.od).includes(f) ||
+      e.gost.toLowerCase().includes(f) ||
+      e.mat.toLowerCase().includes(f) ||
+      String(e.angle).includes(f)
+    );
+  },[refFilter]);
+
+  return (
+    <div className="app">
+      <div className="header">
+        <div className="header-icon">↩</div>
+        <div>
+          <h1>КАЛЬКУЛЯТОР ЗАГРУЗКИ ОТВОДОВ</h1>
+          <p>ГОСТ 17375 / 30753 · ТУ 1468 · EN 10253-1/2/4 · DN 25–1600</p>
+        </div>
+        <div className="header-badges">
+          <span className="badge badge-amber">90° 60° 45° 30° 22.5° 180°</span>
+          <span className="badge badge-green">DN 25–1600</span>
+          <span className="badge badge-blue">P235GH · X2CrNi · Ст20</span>
+          {hasOversized && <span className="badge badge-red">⚠ НЕГАБАРИТ</span>}
+        </div>
+      </div>
+
+      <div className="layout">
+        {/* ─── LEFT ─── */}
+        <div>
+          {/* Транспорт */}
+          <div className="card">
+            <div className="card-hdr">🚛 Тип транспорта</div>
+            <div className="vtabs">
+              {Object.entries(VEHICLES).map(([k,v])=>(
+                <button key={k} className={'vtab'+(vKey===k?' active':'')} onClick={()=>setVKey(k)}>
+                  <span className="vtab-icon">{v.icon}</span>
+                  <span style={{fontSize:11}}>{v.name}</span>
+                  {v.type==='oversized'&&<span className="vtab-warn">СПЕЦ</span>}
+                </button>
+              ))}
+            </div>
+            <div className="vinfo">
+              <div className="vi-item"><div className="vi-val">{VEHICLES[vKey].L}</div><div className="vi-lbl">Длина, мм</div></div>
+              <div className="vi-item"><div className="vi-val">{VEHICLES[vKey].W}</div><div className="vi-lbl">Ширина, мм</div></div>
+              <div className="vi-item"><div className="vi-val">{VEHICLES[vKey].H}</div><div className="vi-lbl">Высота, мм</div></div>
+              <div className="vi-item"><div className="vi-val">{(VEHICLES[vKey].maxW/1000).toFixed(0)} т</div><div className="vi-lbl">Грузоподъём.</div></div>
+            </div>
+            {VEHICLES[vKey].note&&<div className="alert alert-over">⚠ {VEHICLES[vKey].note}</div>}
+          </div>
+
+          {/* Режим */}
+          <div className="card">
+            <div className="card-hdr">➕ Добавить позицию</div>
+            <div className="mode-tabs">
+              <button className={'mode-tab'+(mode==='db'?' active':'')} onClick={()=>setMode('db')}>📚 Из базы данных</button>
+              <button className={'mode-tab'+(mode==='manual'?' active':'')} onClick={()=>setMode('manual')}>✏️ Ручной ввод</button>
+            </div>
+
+            {mode==='db' && (<>
+              <div className="form-row">
+                <div className="field">
+                  <label>Условный проход DN</label>
+                  <select value={form.dn} onChange={e=>setForm(f=>({...f,dn:e.target.value,gost:'',mat:'',angle:'90'}))}>
+                    {DNS.map(d=><option key={d} value={d}>DN {d} (Ø{ELBOWS_DB.find(x=>x.dn===d)?.od})</option>)}
+                  </select>
+                </div>
+                <div className="field">
+                  <label>Радиус гиба</label>
+                  <select value={form.r} onChange={e=>setForm(f=>({...f,r:e.target.value,gost:'',mat:'',angle:'90'}))}>
+                    {availRs.map(r=><option key={r} value={r}>{r==='1D'?'1D (короткий)':r==='1.5D'?'1.5D (длинный)':r}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="field">
+                  <label>Стандарт / НД</label>
+                  <select value={form.gost} onChange={e=>setForm(f=>({...f,gost:e.target.value,mat:''}))}>
+                    <option value="">— Любой —</option>
+                    {availGosts.map(g=><option key={g} value={g}>{g}</option>)}
+                  </select>
+                </div>
+                <div className="field">
+                  <label>Материал</label>
+                  <select value={form.mat} onChange={e=>setForm(f=>({...f,mat:e.target.value}))}>
+                    <option value="">— Любой —</option>
+                    {availMats.map(m=><option key={m} value={m}>{m}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="field">
+                  <label>Угол отвода</label>
+                  <select value={form.angle} onChange={e=>setForm(f=>({...f,angle:e.target.value}))}>
+                    {availAngles.map(a=><option key={a} value={a}>{a}°{a===180?' (возврат)':''}</option>)}
+                    {availAngles.length===0&&<option value="90">90°</option>}
+                  </select>
+                </div>
+                <div className="field">
+                  <label>Количество, шт</label>
+                  <input type="number" min="1" value={form.qty} onChange={e=>setForm(f=>({...f,qty:e.target.value}))}/>
+                </div>
+              </div>
+              <div className="field" style={{marginBottom:8}}>
+                <label>Наименование позиции (необяз.)</label>
+                <input type="text" value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} placeholder="Авто-заполнение"/>
+              </div>
+
+              {selectedElbow ? (
+                <div className="elbow-prev">
+                  <ElbowSVG angle={selectedElbow.angle} size={64}/>
+                  <div className="elbow-specs">
+                    <div className="spec-row"><span className="spec-lbl">Ø нар. × стенка</span><span className="spec-val">{selectedElbow.od} × {selectedElbow.wt} мм</span></div>
+                    <div className="spec-row"><span className="spec-lbl">Строит. размер F</span><span className="spec-val">{selectedElbow.F} мм</span></div>
+                    <div className="spec-row"><span className="spec-lbl">Радиус гиба R</span><span className="spec-val">{selectedElbow.R} мм</span></div>
+                    <div className="spec-row"><span className="spec-lbl">Вес 1 шт.</span><span className="spec-val">{selectedElbow.weight} кг</span></div>
+                    <div className="spec-row"><span className="spec-lbl">Стандарт</span><span className="spec-val" style={{color:'var(--text2)'}}>{selectedElbow.gost}</span></div>
+                    <div className="spec-row"><span className="spec-lbl">Материал</span><span className="spec-val spec-mat">{selectedElbow.mat}</span></div>
+                    {selectedElbow.note&&<div className="spec-row"><span className="spec-lbl">Примечание</span><span className="spec-val spec-warn">{selectedElbow.note}</span></div>}
+                  </div>
+                </div>
+              ) : (
+                <div className="alert alert-warn">Нет позиции в базе для выбранной комбинации. Попробуйте ручной ввод.</div>
+              )}
+
+              {selectedElbow && (
+                <div className="pkg-box">
+                  <strong>📦 УПАКОВКА / КРЕПЛЕНИЕ</strong>
+                  {getPkg(selectedElbow.dn).desc}
+                </div>
+              )}
+
+              <div className="btn-row">
+                <button className="btn btn-amber" onClick={addFromDb} disabled={!selectedElbow}>Добавить в расчёт</button>
+                <button className="btn btn-ghost btn-sm" onClick={()=>setShowRef(!showRef)}>{showRef?'Скрыть':'📚 Справочник'}</button>
+              </div>
+            </>)}
+
+            {mode==='manual' && (<>
+              <div className="manual-note">
+                Введите параметры нестандартного отвода вручную. F — строительный размер (от оси до торца), R — радиус гиба по нейт. оси.
+              </div>
+              <div className="form-row">
+                <div className="field"><label>Ø нар., мм</label><input type="number" value={mf.od} onChange={e=>setMf(f=>({...f,od:e.target.value}))} placeholder="1219"/></div>
+                <div className="field"><label>Стенка, мм</label><input type="number" value={mf.wt} onChange={e=>setMf(f=>({...f,wt:e.target.value}))} placeholder="14.2"/></div>
+              </div>
+              <div className="form-row">
+                <div className="field"><label>Угол, °</label><input type="number" value={mf.angle} onChange={e=>setMf(f=>({...f,angle:e.target.value}))} placeholder="90"/></div>
+                <div className="field"><label>R гиба, мм</label><input type="number" value={mf.R} onChange={e=>setMf(f=>({...f,R:e.target.value}))} placeholder="1829"/></div>
+              </div>
+              <div className="form-row">
+                <div className="field"><label>F строит. размер, мм</label><input type="number" value={mf.F} onChange={e=>setMf(f=>({...f,F:e.target.value}))} placeholder="2048"/></div>
+                <div className="field"><label>Вес 1 шт., кг</label><input type="number" value={mf.weight} onChange={e=>setMf(f=>({...f,weight:e.target.value}))} placeholder="2200"/></div>
+              </div>
+              <div className="form-row">
+                <div className="field"><label>Стандарт / НД</label><input type="text" value={mf.gost} onChange={e=>setMf(f=>({...f,gost:e.target.value}))} placeholder="EN 10253-2"/></div>
+                <div className="field"><label>Материал</label><input type="text" value={mf.mat} onChange={e=>setMf(f=>({...f,mat:e.target.value}))} placeholder="P235GH"/></div>
+              </div>
+              <div className="form-row">
+                <div className="field"><label>Количество, шт</label><input type="number" min="1" value={mf.qty} onChange={e=>setMf(f=>({...f,qty:e.target.value}))}/></div>
+                <div className="field"><label>Наименование</label><input type="text" value={mf.name} onChange={e=>setMf(f=>({...f,name:e.target.value}))} placeholder="Автозаполнение"/></div>
+              </div>
+              <div className="btn-row">
+                <button className="btn btn-blue" onClick={addManual} disabled={!mf.od||!mf.F||!mf.weight}>Добавить в расчёт</button>
+              </div>
+            </>)}
+          </div>
+
+          {/* Справочник */}
+          {showRef && (
+            <div className="card">
+              <div className="card-hdr">📚 Справочник отводов</div>
+              <div className="field" style={{marginBottom:8}}>
+                <label>Фильтр (DN, Ø, материал, стандарт, угол)</label>
+                <input type="text" value={refFilter} onChange={e=>setRefFilter(e.target.value)} placeholder="Например: 1200 или X2CrNi или EN 10253-4"/>
+              </div>
+              <div style={{overflowX:'auto',maxHeight:360,overflowY:'auto'}}>
+                <table className="items-table">
+                  <thead><tr>
+                    <th>DN</th><th>Ø нар.</th><th>S</th><th>Угол</th><th>R</th><th>F</th><th>Вес</th><th>Стандарт</th><th>Материал</th>
+                  </tr></thead>
+                  <tbody>
+                    {filteredDb.map((e,i)=>(
+                      <tr key={i} style={{cursor:'pointer'}} onClick={()=>{
+                        if (mode==='db') {
+                          setForm(f=>({...f,dn:String(e.dn),r:e.r,angle:String(e.angle),gost:e.gost,mat:e.mat}));
+                        } else {
+                          setMf(f=>({...f,od:String(e.od),wt:String(e.wt),angle:String(e.angle),R:String(e.R),F:String(e.F),weight:String(e.weight),gost:e.gost,mat:e.mat}));
+                        }
+                        setShowRef(false);
+                      }}>
+                        <td style={{color:'var(--amber)',fontWeight:700}}>DN{e.dn}</td>
+                        <td style={{fontFamily:'var(--mono)'}}>{e.od}</td>
+                        <td style={{fontFamily:'var(--mono)'}}>{e.wt}</td>
+                        <td>{e.angle}°</td>
+                        <td style={{color:'var(--text3)'}}>{e.r}</td>
+                        <td style={{fontFamily:'var(--mono)'}}>{e.F}</td>
+                        <td style={{fontFamily:'var(--mono)',color:'var(--green)'}}>{e.weight}</td>
+                        <td style={{color:'var(--text3)',fontSize:10}}>{e.gost}</td>
+                        <td style={{color:'var(--blue)',fontSize:10}}>{e.mat}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div style={{color:'var(--text3)',fontSize:10,marginTop:6}}>Нажмите строку — заполнить форму. Показано: {filteredDb.length} из {ELBOWS_DB.length}</div>
+            </div>
+          )}
+        </div>
+
+        {/* ─── RIGHT ─── */}
+        <div>
+          <div className="card">
+            <div className="card-hdr" style={{justifyContent:'space-between'}}>
+              <span>📋 Позиции загрузки</span>
+              {items.length>0&&<button className="btn btn-red btn-sm" onClick={()=>setItems([])}>Очистить всё</button>}
+            </div>
+
+            {items.length===0 ? (
+              <div className="empty">
+                <div className="empty-icon">↩</div>
+                <div>Добавьте отводы для расчёта</div>
+                <div style={{fontSize:11,marginTop:6,color:'var(--text3)'}}>Выберите позицию из базы или введите вручную</div>
+              </div>
+            ) : (<>
+              <div style={{overflowX:'auto'}}>
+                <table className="items-table">
+                  <thead><tr>
+                    <th>Позиция</th><th>Ø×S</th><th>Угол</th><th>F, мм</th><th>Стандарт</th><th>Материал</th><th>Вес 1шт</th><th>Кол.</th><th>Итого, т</th><th></th>
+                  </tr></thead>
+                  <tbody>
+                    {items.map(it=>(
+                      <tr key={it.id}>
+                        <td style={{color:'var(--text2)',maxWidth:160,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{it.name}</td>
+                        <td style={{fontFamily:'var(--mono)',color:'var(--amber)'}}>{it.elbow.od}×{it.elbow.wt}</td>
+                        <td>{it.elbow.angle}°</td>
+                        <td style={{fontFamily:'var(--mono)'}}>{it.elbow.F}</td>
+                        <td style={{color:'var(--text3)',fontSize:10}}>{it.elbow.gost}</td>
+                        <td style={{color:'var(--blue)',fontSize:10}}>{it.elbow.mat}</td>
+                        <td style={{fontFamily:'var(--mono)'}}>{it.elbow.weight} кг</td>
+                        <td style={{color:'var(--amber)',fontWeight:700}}>{it.qty}</td>
+                        <td style={{fontFamily:'var(--mono)',color:'var(--green)'}}>{(it.elbow.weight*it.qty/1000).toFixed(2)}</td>
+                        <td><button className="btn btn-red" onClick={()=>removeItem(it.id)}>✕</button></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {result && (<>
+                <div className="divider"/>
+                <div className="results-grid">
+                  <div className="rstat"><div className="rstat-val">{result.totalVehicles}</div><div className="rstat-lbl">ТС требуется</div></div>
+                  <div className="rstat"><div className="rstat-val">{(result.totalWeight/1000).toFixed(2)}</div><div className="rstat-lbl">Общий вес, т</div></div>
+                  <div className="rstat"><div className="rstat-val">{items.reduce((s,i)=>s+i.qty,0)}</div><div className="rstat-lbl">Всего штук</div></div>
+                  <div className="rstat"><div className="rstat-val">{result.v.name.split(' ')[0]}</div><div className="rstat-lbl">Тип ТС</div></div>
+                </div>
+
+                {hasOversized&&(
+                  <div className="alert alert-over">⚠️ Обнаружены негабаритные позиции — требуется специальный транспорт (тял / спецтранспорт) или раздельная отгрузка.</div>
+                )}
+
+                {result.processed.map((p,i)=>(
+                  <div key={p.id} className={`transport-card${p.oversized?' oversized':''}`}>
+                    <div className="tc-hdr">
+                      <div className="tc-num">{i+1}</div>
+                      <div>
+                        <div className="tc-title">{p.name}</div>
+                        <div style={{fontSize:11,color:'var(--text3)'}}>
+                          Ø{p.elbow.od}×{p.elbow.wt} · {p.elbow.angle}° · F={p.elbow.F} мм · {p.elbow.weight} кг/шт · {p.elbow.mat}
+                        </div>
+                      </div>
+                      <div className="tc-badges">
+                        {p.oversized
+                          ? <span className="oversized-badge">⚠ НЕГАБАРИТ</span>
+                          : <span className="badge badge-green">{isFinite(p.vehiclesNeeded)?p.vehiclesNeeded+' ТС':'∞'}</span>
+                        }
+                      </div>
+                    </div>
+
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6,marginBottom:8,fontSize:11}}>
+                      <div><span style={{color:'var(--text3)'}}>Bbox Ш×В: </span>
+                        <span style={{fontFamily:'var(--mono)',color:(p.singleOverW||p.singleOverH)?'var(--red)':'var(--text)'}}>
+                          {p.boxW}×{p.boxH} мм
+                        </span>
+                      </div>
+                      <div><span style={{color:'var(--text3)'}}>В 1 ТС (макс): </span>
+                        <span style={{fontFamily:'var(--mono)',color:'var(--amber)'}}>{p.maxPerVeh} шт</span>
+                      </div>
+                      <div><span style={{color:'var(--text3)'}}>Вес партии: </span>
+                        <span style={{fontFamily:'var(--mono)',color:'var(--green)'}}>{(p.wTotal/1000).toFixed(2)} т</span>
+                      </div>
+                    </div>
+
+                    <div className="pkg-box" style={{marginBottom:6}}>
+                      <strong>📦 {p.pkg.label}</strong>{p.pkg.desc}
+                    </div>
+
+                    {p.singleOverW&&<div className="alert alert-err">⛔ Ширина отвода с упаковкой ({p.boxW} мм) &gt; ширины кузова ({result.v.W} мм) — нужен спецтранспорт</div>}
+                    {p.singleOverH&&<div className="alert alert-err">⛔ Высота укладки ({p.boxH} мм) &gt; высоты кузова ({result.v.H} мм)</div>}
+                    {p.elbow.note==='КГО'&&!p.oversized&&<div className="alert alert-warn">⚠ Крупногабаритный отвод — рекомендуется согласование перевозки</div>}
+                    {(p.elbow.note==='Негабарит'||p.elbow.note==='Нержавейка')&&<div className="alert alert-over">🔴 Негабаритный груз — требуется спецразрешение Ространснадзора, сопровождение ГИБДД.</div>}
+                  </div>
+                ))}
+
+                <div className="card" style={{background:'var(--surface3)',marginTop:0}}>
+                  <div className="card-hdr">📋 Общие рекомендации</div>
+                  <div style={{fontSize:12,color:'var(--text2)',lineHeight:1.7}}>
+                    <b style={{color:'var(--text)'}}>Крепление:</b> стальные стяжные ремни (min 2 точки на отвод DN≥200), деревянные брусья-упоры.<br/>
+                    <b style={{color:'var(--text)'}}>Прокладки:</b> резиновые (t=10–15 мм) для защиты фасонины и покрытия.<br/>
+                    <b style={{color:'var(--text)'}}>Торцы:</b> ПЭ-заглушки или картонные вставки для защиты фасок и резьбы.<br/>
+                    {items.some(it=>it.elbow.mat.includes('CrNi')||it.elbow.mat.includes('нержав'))&&
+                      <><b style={{color:'var(--blue)'}}>Нержавейка:</b> исключить контакт с углеродистой сталью (прокладки из нержав. листа или резины).<br/></>}
+                    {hasOversized&&<><b style={{color:'var(--red)'}}>Негабаритный груз:</b> разрешение Ространснадзора, маршрутный лист, автосопровождение.<br/></>}
+                    <b style={{color:'var(--text)'}}>Документация:</b> ТОРГ-12, ТТН, сертификат EN 10204 3.1/3.2 или ГОСТ 31458.
+                  </div>
+                </div>
+              </>)}
+            </>)}
+          </div>
+        </div>
+      </div>
+
+      <div style={{textAlign:'center',color:'var(--text3)',fontSize:10,padding:'8px 0'}}>
+        Калькулятор загрузки отводов · ГОСТ 17375-2001 / 30753-2001 · ТУ 1468-003 · EN 10253-1/2/4 · {ELBOWS_DB.length} позиций в базе · Расчёт ориентировочный
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App,null));
+</script>
+</body>
+</html>
